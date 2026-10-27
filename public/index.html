@@ -1,0 +1,184 @@
+\
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#171717">
+<title>Witherness AI</title>
+<style>
+:root{color-scheme:dark;--bg:#212121;--panel:#171717;--panel2:#2f2f2f;--line:#3c3c3c;--text:#ececec;--muted:#a1a1aa;--accent:#a78bfa}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+button,textarea{font:inherit}button{cursor:pointer;color:inherit}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{background:var(--panel);padding:14px;display:flex;flex-direction:column;gap:14px;border-right:1px solid #242424}
+.brand{display:flex;align-items:center;gap:10px;padding:8px 6px;font-weight:750;font-size:18px;letter-spacing:.2px}
+.logo{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#4f46e5);font-weight:800}
+.new-chat{width:100%;text-align:left;background:transparent;border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+.new-chat:hover,.history-item:hover,.side-link:hover{background:#292929}
+.section-label{color:var(--muted);font-size:12px;padding:0 8px;text-transform:uppercase;letter-spacing:.08em}
+.history{display:flex;flex-direction:column;gap:4px;overflow:auto}
+.history-item,.side-link{border:0;background:transparent;border-radius:9px;padding:9px 10px;text-align:left;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-item.active{background:#2d2d2d}
+.sidebar-bottom{margin-top:auto;border-top:1px solid #2b2b2b;padding-top:12px;color:var(--muted);font-size:12px}
+.main{display:flex;flex-direction:column;min-width:0;height:100vh}
+.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid #333;flex-shrink:0}
+.model-label{font-weight:650}.status{font-size:12px;color:#c4b5fd}
+.chat-area{flex:1;overflow:auto;padding:30px 18px 20px}
+.welcome{max-width:760px;margin:10vh auto 0;text-align:center}
+.welcome h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin:0 0 12px;letter-spacing:-1.2px}
+.gradient{background:linear-gradient(90deg,#c4b5fd,#93c5fd);color:transparent;background-clip:text}
+.welcome p{color:var(--muted);margin:0 0 26px}
+.suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left}
+.suggestion{background:#272727;border:1px solid #3b3b3b;border-radius:14px;padding:13px;color:#dedede}
+.suggestion:hover{background:#303030}
+.messages{max-width:790px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.message{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start}
+.avatar{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;background:#3b3b3b;font-size:14px;font-weight:700}
+.message.assistant .avatar{background:linear-gradient(135deg,#8b5cf6,#4f46e5)}
+.message-content{padding-top:3px;white-space:pre-wrap;overflow-wrap:anywhere}
+.message.user .message-content{background:#303030;border-radius:18px;padding:12px 15px;margin-right:2px}
+.composer-wrap{padding:12px 18px 18px;background:linear-gradient(transparent,var(--bg) 20%)}
+.composer{max-width:790px;margin:auto;background:#2f2f2f;border:1px solid #484848;border-radius:22px;padding:10px 10px 10px 16px;display:flex;gap:10px;align-items:flex-end;box-shadow:0 6px 25px #0002}
+#prompt{flex:1;resize:none;border:0;outline:0;background:transparent;color:var(--text);min-height:28px;max-height:180px;padding:5px 0}
+#prompt::placeholder{color:#aaa}
+.send{border:0;border-radius:13px;background:#f3f4f6;color:#171717;width:38px;height:38px;font-size:20px;font-weight:700;flex-shrink:0}
+.send:disabled{opacity:.45;cursor:not-allowed}
+.hint{text-align:center;color:#8e8e93;font-size:11px;margin-top:9px}
+.typing{color:var(--muted);font-size:14px}
+.mobile-menu{display:none;border:0;background:transparent;font-size:20px}
+@media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{display:none;position:fixed;z-index:5;inset:0 auto 0 0;width:min(300px,86vw);box-shadow:10px 0 40px #0008}.sidebar.open{display:flex}.mobile-menu{display:inline-block}.topbar{padding:0 14px}.chat-area{padding:20px 12px}.composer-wrap{padding:10px 10px 14px}.suggestions{grid-template-columns:1fr}.welcome{margin-top:7vh}.welcome h1{font-size:30px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="logo">W</span><span>Witherness</span></div>
+    <button class="new-chat" id="newChat">＋ &nbsp; New chat</button>
+    <div class="section-label">Recent chats</div>
+    <div class="history" id="history"></div>
+    <div class="sidebar-bottom">Witherness AI · Starter version<br>Conversations are saved in this browser.</div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:10px"><button class="mobile-menu" id="menu" aria-label="Open menu">☰</button><span class="model-label">Witherness AI <span style="color:#aaa;font-weight:400">⌄</span></span></div>
+      <span class="status">● AI chat</span>
+    </header>
+    <section class="chat-area" id="chatArea">
+      <div class="welcome" id="welcome">
+        <h1>What can I help you <span class="gradient">with?</span></h1>
+        <p>Your Witherness AI assistant. Ask a question, explore an idea, or make something.</p>
+        <div class="suggestions">
+          <button class="suggestion" data-prompt="Help me brainstorm a fun game idea for Witherness.">🎮 &nbsp; Invent a game for Witherness</button>
+          <button class="suggestion" data-prompt="Explain how APIs work in simple terms, with an example.">💡 &nbsp; Explain something clearly</button>
+          <button class="suggestion" data-prompt="Help me design a dark-themed homepage for my website.">🎨 &nbsp; Design a website</button>
+          <button class="suggestion" data-prompt="Give me a small JavaScript project I can build to learn.">💻 &nbsp; Learn to code</button>
+        </div>
+      </div>
+      <div class="messages" id="messages"></div>
+    </section>
+    <footer class="composer-wrap">
+      <form class="composer" id="chatForm">
+        <textarea id="prompt" rows="1" maxlength="6000" placeholder="Message Witherness AI…" aria-label="Message Witherness AI"></textarea>
+        <button class="send" id="send" aria-label="Send message">↑</button>
+      </form>
+      <div class="hint">AI can make mistakes. Don't share passwords or private information.</div>
+    </footer>
+  </main>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const promptBox = $('prompt'), messagesEl = $('messages'), welcome = $('welcome');
+  let chats = [], currentId = null, busy = false;
+  try { chats = JSON.parse(localStorage.getItem('witherness_chats') || '[]'); } catch { chats = []; }
+  if (!Array.isArray(chats)) chats = [];
+
+  function save(){ try { localStorage.setItem('witherness_chats', JSON.stringify(chats)); } catch {} }
+  function current(){ return chats.find(c => c.id === currentId); }
+  function escapeText(text){ return String(text).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function renderHistory(){
+    $('history').innerHTML = '';
+    chats.slice().reverse().forEach(chat => {
+      const b = document.createElement('button');
+      b.className = 'history-item' + (chat.id === currentId ? ' active' : '');
+      b.textContent = chat.title || 'New chat';
+      b.title = chat.title || 'New chat';
+      b.onclick = () => { currentId = chat.id; renderChat(); $('sidebar').classList.remove('open'); };
+      $('history').appendChild(b);
+    });
+  }
+  function renderChat(){
+    const chat = current();
+    messagesEl.innerHTML = '';
+    welcome.style.display = chat && chat.messages.length ? 'none' : 'block';
+    if(chat) chat.messages.forEach(m => addBubble(m.role, m.content));
+    renderHistory();
+    scrollBottom();
+  }
+  function addBubble(role, content){
+    const row = document.createElement('div');
+    row.className = 'message ' + role;
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = role === 'user' ? 'Y' : 'W';
+    const body = document.createElement('div');
+    body.className = 'message-content';
+    body.textContent = content;
+    row.append(avatar, body);
+    messagesEl.appendChild(row);
+    return body;
+  }
+  function scrollBottom(){ $('chatArea').scrollTop = $('chatArea').scrollHeight; }
+  function newChat(){
+    currentId = null;
+    messagesEl.innerHTML = '';
+    welcome.style.display = 'block';
+    renderHistory();
+    promptBox.focus();
+  }
+  $('newChat').onclick = newChat;
+  $('menu').onclick = () => $('sidebar').classList.toggle('open');
+  document.querySelectorAll('[data-prompt]').forEach(b => b.addEventListener('click', () => {
+    promptBox.value = b.dataset.prompt; resize(); promptBox.focus();
+  }));
+  function resize(){ promptBox.style.height = 'auto'; promptBox.style.height = Math.min(promptBox.scrollHeight,180) + 'px'; }
+  promptBox.addEventListener('input', resize);
+  promptBox.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey){e.preventDefault(); $('chatForm').requestSubmit();} });
+
+  $('chatForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const text = promptBox.value.trim();
+    if(!text || busy) return;
+    let chat = current();
+    if(!chat){
+      chat = {id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())), title: text.slice(0,42), messages: []};
+      chats.push(chat); currentId = chat.id;
+    }
+    chat.messages.push({role:'user',content:text});
+    promptBox.value = ''; resize(); busy = true; $('send').disabled = true;
+    welcome.style.display = 'none';
+    addBubble('user', text);
+    const answerEl = addBubble('assistant', 'Thinking…');
+    scrollBottom(); renderHistory(); save();
+    try {
+      const response = await fetch('/api/chat', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({messages:chat.messages.slice(-20)})
+      });
+      const data = await response.json().catch(() => ({}));
+      if(!response.ok) throw new Error(data.error || 'The server could not answer. Check that it is running and configured.');
+      const answer = String(data.reply || '').trim() || 'I did not receive a text response. Please try again.';
+      answerEl.textContent = answer;
+      chat.messages.push({role:'assistant',content:answer});
+    } catch(err) {
+      answerEl.textContent = 'Could not reach Witherness AI: ' + err.message + '\n\nMake sure the Node server is running and your API key is configured.';
+    } finally {
+      busy = false; $('send').disabled = false; save(); renderHistory(); scrollBottom(); promptBox.focus();
+    }
+  });
+  renderHistory();
+})();
+</script>
+</body>
+</html>
